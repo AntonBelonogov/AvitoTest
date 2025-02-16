@@ -1,0 +1,44 @@
+linters-settings:
+  govet: { }
+  shadow: true
+  errcheck:
+    check-type-assertions: true
+  staticcheck: { }
+  gocritic:
+    enabled-checks:
+      - appendAssign
+  revive:
+    rules:
+      - name: add-constant
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - staticcheck
+    - unused
+    - gofmt
+    - revive
+    - gocritic
+    - goconst
+  disable:
+    - godox
+
+issues:
+  exclude-dirs:
+    - "vendor"
+    - "mocks"
+  exclude:
+    - "error strings should not be capitalized"
+
+run:
+  timeout: 5m
+  tests: false
+
+output:
+  formats:
+    - format: colored-line-number
+    - format: json
+  print-issued-lines: true
+  print-linter-name: true
