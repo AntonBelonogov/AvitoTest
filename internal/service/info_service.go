@@ -33,7 +33,7 @@ func (s *InfoService) GetUserInfo(userIdStr string) (dto.InfoResponse, error) {
 	}
 
 	infoResponse := dto.InfoResponse{
-		Coins:       constants.ZeroConst,
+		Coins:       0,
 		Inventory:   []dto.Inventory{},
 		CoinHistory: dto.CoinHistory{},
 	}
