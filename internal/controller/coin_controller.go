@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"AvitoTest/internal/model/dto"
 	"net/http"
+
+	"AvitoTest/internal/model/dto"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -12,8 +13,11 @@ import (
 )
 
 func InitCoin(api *gin.RouterGroup, db *gorm.DB) {
-	historyRep := repository.NewHistoryRepository(db)
-	coinService := service.NewCoinService(historyRep)
+	txRepo := repository.NewTransactionRepository(db)
+	hisRepo := repository.NewHistoryRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	productRepo := repository.NewProductRepository(db)
+	coinService := service.NewCoinService(txRepo, hisRepo, userRepo, productRepo)
 	ctrl := newCoinController(coinService)
 
 	api.POST("/sendCoin", ctrl.HandleSendCoin)
@@ -39,7 +43,7 @@ func (ctrl *CoinController) HandleSendCoin(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	ctx.Status(http.StatusOK)
 }
 
 func (ctrl *CoinController) HandleBuyItem(ctx *gin.Context) {
@@ -49,4 +53,6 @@ func (ctrl *CoinController) HandleBuyItem(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	ctx.Status(http.StatusOK)
 }

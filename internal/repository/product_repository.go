@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 
 	"AvitoTest/internal/model/entity"
@@ -14,42 +16,62 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (hr *ProductRepository) GetProductByNameTx(productName string, tx *gorm.DB) (*entity.Product, error) {
-	if tx == nil {
-		tx = hr.db
-	}
-
-	var product entity.Product
-
-	tx = hr.db.Where("Name = ?", productName).First(&product)
-
-	if tx.Error != nil {
-		tx.Rollback()
-		return nil, tx.Error
-	}
-
-	return &product, tx.Error
+func (hr *ProductRepository) Create(product *entity.Product) error {
+	return hr.db.Create(&product).Error
 }
 
-func (hr *ProductRepository) PutUserProductTx(userId uint, productId uint, tx *gorm.DB) (*entity.UserProduct, error) {
-	if tx == nil {
-		tx = hr.db
+func (hr *ProductRepository) GetById(id uint) (*entity.Product, error) {
+	var product entity.Product
+
+	err := hr.db.Where("id = ?", id).First(&product).Error
+
+	return &product, err
+}
+
+func (hr *ProductRepository) Update(product *entity.Product) error {
+	if product != nil && product.ID == 0 {
+		return errors.New("product ID can't be nil")
 	}
 
-	userProduct := entity.UserProduct{
-		UserId:    userId,
-		ProductId: productId,
-		Amount:    1,
+	return hr.db.Save(&product).Error
+}
+
+func (hr *ProductRepository) Delete(product *entity.Product) error {
+	if product != nil && product.ID == 0 {
+		return errors.New("product ID can't be nil")
 	}
 
+	return hr.db.Delete(&product).Error
+}
+
+func (hr *ProductRepository) GetProductByName(productName string) (*entity.Product, error) {
+	return hr.GetProductByNameTx(hr.db, productName)
+}
+
+func (hr *ProductRepository) GetProductByNameTx(db *gorm.DB, productName string) (*entity.Product, error) {
+	var product entity.Product
+
+	err := db.Where("Name = ?", productName).First(&product).Error
+
+	return &product, err
+}
+
+func (hr *ProductRepository) SaveUserProductTx(db *gorm.DB, userProduct *entity.UserProduct) error {
+	return db.Save(&userProduct).Error
+}
+
+func (hr *ProductRepository) PutUserProductTx(tx *gorm.DB, userProduct entity.UserProduct) error {
 	if err := tx.
-		Where("user_id = ? AND product_id = ?", userId, productId).
-		First(&userProduct).Error; err != nil {
-		tx.Create(&userProduct)
-	} else {
+		Where("user_id = ? AND product_id = ?", userProduct.UserId, userProduct.ProductId).
+		First(&userProduct).Error; err == nil {
 		userProduct.Amount = userProduct.Amount + 1
-		tx.Save(&userProduct)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
 	}
 
-	return &userProduct, tx.Error
+	if err := hr.SaveUserProductTx(tx, &userProduct); err != nil {
+		return err
+	}
+
+	return nil
 }

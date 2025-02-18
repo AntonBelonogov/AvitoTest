@@ -12,16 +12,16 @@ import (
 )
 
 type InfoService struct {
-	historyRepository repository.HistoryRepositoryInterface
-	userRepository    repository.UserRepositoryInterface
+	historyRepository *repository.HistoryRepository
+	userRepository    *repository.UserRepository
 }
 
 func NewInfoService(
-	infoRepository repository.HistoryRepositoryInterface,
-	userRepository repository.UserRepositoryInterface,
+	historyRepository *repository.HistoryRepository,
+	userRepository *repository.UserRepository,
 ) *InfoService {
 	return &InfoService{
-		historyRepository: infoRepository,
+		historyRepository: historyRepository,
 		userRepository:    userRepository,
 	}
 }
@@ -33,9 +33,12 @@ func (s *InfoService) GetUserInfo(userIdStr string) (dto.InfoResponse, error) {
 	}
 
 	infoResponse := dto.InfoResponse{
-		Coins:       0,
-		Inventory:   []dto.Inventory{},
-		CoinHistory: dto.CoinHistory{},
+		Coins:     0,
+		Inventory: []dto.Inventory{},
+		CoinHistory: dto.CoinHistory{
+			Received: []dto.CoinTransaction{},
+			Sent:     []dto.CoinTransaction{},
+		},
 	}
 
 	user, err := s.userRepository.FindAndPreloadUserById(uint(userId))

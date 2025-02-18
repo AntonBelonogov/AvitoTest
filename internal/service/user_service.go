@@ -14,16 +14,16 @@ import (
 )
 
 type UserService struct {
-	repository repository.UserRepositoryInterface
+	repository *repository.UserRepository
 }
 
-func NewUserService(repository repository.UserRepositoryInterface) *UserService {
+func NewUserService(repository *repository.UserRepository) *UserService {
 	return &UserService{repository: repository}
 }
 
 func (s *UserService) AuthUser(authRequest dto.AuthRequest) (string, error) {
 
-	user, err := s.repository.FindUserByUsername(authRequest.Username, nil)
+	user, err := s.repository.FindUserByUsername(authRequest.Username)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		if user, err = s.registerUser(authRequest); err != nil {
