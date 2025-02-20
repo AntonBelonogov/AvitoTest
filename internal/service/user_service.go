@@ -3,10 +3,10 @@ package service
 import (
 	"errors"
 
-	"AvitoTest/internal/constants"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
+	"AvitoTest/internal/constants"
 	"AvitoTest/internal/model/dto"
 	"AvitoTest/internal/model/entity"
 	"AvitoTest/internal/repository"
@@ -14,16 +14,16 @@ import (
 )
 
 type UserService struct {
-	repository *repository.UserRepository
+	userRepo *repository.UserRepository
 }
 
-func NewUserService(repository *repository.UserRepository) *UserService {
-	return &UserService{repository: repository}
+func NewUserService(userRepo *repository.UserRepository) *UserService {
+	return &UserService{userRepo: userRepo}
 }
 
 func (s *UserService) AuthUser(authRequest dto.AuthRequest) (string, error) {
 
-	user, err := s.repository.FindUserByUsername(authRequest.Username)
+	user, err := s.userRepo.FindUserByUsername(authRequest.Username)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		if user, err = s.registerUser(authRequest); err != nil {
@@ -54,7 +54,7 @@ func (s *UserService) registerUser(authRequest dto.AuthRequest) (*entity.User, e
 		Balance:  constants.StartBalance,
 	}
 
-	result := s.repository.CreateUser(&user)
+	result := s.userRepo.CreateUser(&user)
 
 	if result.Error != nil {
 		return nil, result.Error

@@ -18,7 +18,7 @@ func InitCoin(api *gin.RouterGroup, db *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	coinService := service.NewCoinService(txRepo, hisRepo, userRepo, productRepo)
-	ctrl := newCoinController(coinService)
+	ctrl := NewCoinController(coinService)
 
 	api.POST("/sendCoin", ctrl.HandleSendCoin)
 	api.GET("/buy/:item", ctrl.HandleBuyItem)
@@ -28,7 +28,7 @@ type CoinController struct {
 	service *service.CoinService
 }
 
-func newCoinController(service *service.CoinService) *CoinController {
+func NewCoinController(service *service.CoinService) *CoinController {
 	return &CoinController{service: service}
 }
 

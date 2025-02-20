@@ -2,12 +2,11 @@ package service
 
 import (
 	"errors"
-	"strconv"
 
-	"AvitoTest/internal/constants"
 	"AvitoTest/internal/model/dto"
 	"AvitoTest/internal/model/entity"
 	"AvitoTest/internal/repository"
+	"AvitoTest/internal/util"
 )
 
 type CoinService struct {
@@ -32,7 +31,7 @@ func NewCoinService(
 }
 
 func (cs *CoinService) SendCoin(request dto.SendCoinRequest, userIdStr string) error {
-	userId, err := parseUserId(userIdStr)
+	userId, err := util.ParseUserId(userIdStr)
 	if err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func (cs *CoinService) SendCoin(request dto.SendCoinRequest, userIdStr string) e
 }
 
 func (cs *CoinService) BuyItem(item string, userIdStr string) error {
-	userId, err := parseUserId(userIdStr)
+	userId, err := util.ParseUserId(userIdStr)
 	if err != nil {
 		return err
 	}
@@ -131,9 +130,4 @@ func (cs *CoinService) BuyItem(item string, userIdStr string) error {
 	}
 
 	return tx.Commit().Error
-}
-
-func parseUserId(userStr string) (uint, error) {
-	result, err := strconv.ParseUint(userStr, constants.Base10, constants.BitSize)
-	return uint(result), err
 }

@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"AvitoTest/internal/model/dto"
 	"net/http"
+
+	"AvitoTest/internal/model/dto"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -15,14 +16,14 @@ type UserController struct {
 	service *service.UserService
 }
 
-func newController(service *service.UserService) *UserController {
+func NewUserController(service *service.UserService) *UserController {
 	return &UserController{service: service}
 }
 
 func InitUser(api *gin.RouterGroup, db *gorm.DB) {
 	userRepository := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepository)
-	ctrl := newController(userService)
+	ctrl := NewUserController(userService)
 
 	api.POST("/auth", ctrl.Login)
 }

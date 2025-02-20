@@ -2,32 +2,30 @@ package service
 
 import (
 	"errors"
-	"strconv"
 
-	"AvitoTest/internal/constants"
 	"AvitoTest/internal/model/dto"
 	"AvitoTest/internal/model/entity"
-
 	"AvitoTest/internal/repository"
+	"AvitoTest/internal/util"
 )
 
 type InfoService struct {
-	historyRepository *repository.HistoryRepository
-	userRepository    *repository.UserRepository
+	historyRepo *repository.HistoryRepository
+	userRepo    *repository.UserRepository
 }
 
 func NewInfoService(
-	historyRepository *repository.HistoryRepository,
-	userRepository *repository.UserRepository,
+	historyRepo *repository.HistoryRepository,
+	userRepo *repository.UserRepository,
 ) *InfoService {
 	return &InfoService{
-		historyRepository: historyRepository,
-		userRepository:    userRepository,
+		historyRepo: historyRepo,
+		userRepo:    userRepo,
 	}
 }
 
 func (s *InfoService) GetUserInfo(userIdStr string) (dto.InfoResponse, error) {
-	userId, err := strconv.ParseUint(userIdStr, constants.Base10, constants.BitSize)
+	userId, err := util.ParseUserId(userIdStr)
 	if err != nil {
 		return dto.InfoResponse{}, err
 	}
@@ -41,10 +39,10 @@ func (s *InfoService) GetUserInfo(userIdStr string) (dto.InfoResponse, error) {
 		},
 	}
 
-	user, err := s.userRepository.FindAndPreloadUserById(uint(userId))
+	user, err := s.userRepo.FindAndPreloadUserById(userId)
 
 	if err != nil {
-		return infoResponse, errors.New("User exception")
+		return infoResponse, errors.New("user exception")
 	} else {
 		infoResponse.Coins = user.Balance
 	}
@@ -60,7 +58,7 @@ func (s *InfoService) GetUserInfo(userIdStr string) (dto.InfoResponse, error) {
 			})
 	}
 
-	histories, _ := s.historyRepository.FindPreloadHistoryByUserId(user.ID)
+	histories, _ := s.historyRepo.FindPreloadHistoryByUserId(user.ID)
 
 	var received []dto.CoinTransaction
 	var sent []dto.CoinTransaction

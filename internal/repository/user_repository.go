@@ -3,9 +3,9 @@ package repository
 import (
 	"errors"
 
-	"AvitoTest/internal/model/entity"
-
 	"gorm.io/gorm"
+
+	"AvitoTest/internal/model/entity"
 )
 
 type UserRepository struct {
@@ -55,12 +55,11 @@ func (ur *UserRepository) FindUserByUsername(username string) (*entity.User, err
 func (ur *UserRepository) FindUserByUsernameTx(tx *gorm.DB, username string) (*entity.User, error) {
 	var user entity.User
 
-	result := tx.Where("username = ?", username).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) && result.Error != nil {
-		return nil, gorm.ErrRecordNotFound
+	if result := tx.Where("username = ?", username).First(&user); result.Error != nil {
+		return nil, result.Error
 	}
 
-	return &user, result.Error
+	return &user, nil
 }
 
 func (ur *UserRepository) FindUserById(userId uint) (*entity.User, error) {
@@ -70,12 +69,11 @@ func (ur *UserRepository) FindUserById(userId uint) (*entity.User, error) {
 func (ur *UserRepository) FindUserByIdTx(tx *gorm.DB, userId uint) (*entity.User, error) {
 	var user entity.User
 
-	result := tx.Where("ID = ?", userId).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) && result.Error != nil {
-		return nil, gorm.ErrRecordNotFound
+	if result := tx.Where("ID = ?", userId).First(&user); result.Error != nil {
+		return nil, result.Error
 	}
 
-	return &user, result.Error
+	return &user, nil
 }
 
 func (ur *UserRepository) CreateUser(user *entity.User) (result *gorm.DB) {
@@ -85,11 +83,13 @@ func (ur *UserRepository) CreateUser(user *entity.User) (result *gorm.DB) {
 func (ur *UserRepository) FindAndPreloadUserById(userId uint) (*entity.User, error) {
 	var user entity.User
 
-	result := ur.db.
+	if result := ur.db.
 		Preload("Product").
 		Preload("Product.Product").
 		Where("ID = ?", userId).
-		First(&user)
+		First(&user); result.Error != nil {
+		return nil, result.Error
+	}
 
-	return &user, result.Error
+	return &user, nil
 }
