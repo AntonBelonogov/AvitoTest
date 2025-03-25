@@ -1,17 +1,12 @@
 package repository
 
 import (
-	"AvitoTest/internal/model/entity"
 	"errors"
 
 	"gorm.io/gorm"
-)
 
-type UserRepositoryInterface interface {
-	FindUserByUsername(username string, tx *gorm.DB) (*entity.User, error)
-	CreateUser(user *entity.User) *gorm.DB
-	FindAndPreloadUserById(userId uint) (*entity.User, error)
-}
+	"AvitoTest/internal/model/entity"
+)
 
 type UserRepository struct {
 	db *gorm.DB
@@ -21,38 +16,64 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (ur *UserRepository) GetDB() *gorm.DB {
-	return ur.db
+func (ur *UserRepository) Create(user *entity.User) error {
+	return ur.db.Create(user).Error
 }
 
-func (ur *UserRepository) FindUserByUsername(username string, tx *gorm.DB) (*entity.User, error) {
-	if tx == nil {
-		tx = ur.db
-	}
-
+func (ur *UserRepository) GetById(id uint) (*entity.User, error) {
 	var user entity.User
 
-	result := ur.db.Where("username = ?", username).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) && result.Error != nil {
-		return nil, gorm.ErrRecordNotFound
-	}
+	err := ur.db.Where("id = ?", id).First(&user).Error
 
-	return &user, result.Error
+	return &user, err
 }
 
-func (ur *UserRepository) FindUserById(userId uint, tx *gorm.DB) (*entity.User, error) {
-	if tx == nil {
-		tx = ur.db
+func (ur *UserRepository) Update(user *entity.User) error {
+	return ur.UpdateTx(ur.db, user)
+}
+
+func (ur *UserRepository) UpdateTx(tx *gorm.DB, user *entity.User) error {
+	if user != nil && user.ID == 0 {
+		return errors.New("user ID can't be nil")
 	}
 
+	return tx.Save(&user).Error
+}
+
+func (ur *UserRepository) Delete(user *entity.User) error {
+	if user != nil && user.ID == 0 {
+		return errors.New("user ID can't be nil")
+	}
+
+	return ur.db.Delete(&user).Error
+}
+
+func (ur *UserRepository) FindUserByUsername(username string) (*entity.User, error) {
+	return ur.FindUserByUsernameTx(ur.db, username)
+}
+
+func (ur *UserRepository) FindUserByUsernameTx(tx *gorm.DB, username string) (*entity.User, error) {
 	var user entity.User
 
-	result := ur.db.Where("ID = ?", userId).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) && result.Error != nil {
-		return nil, gorm.ErrRecordNotFound
+	if result := tx.Where("username = ?", username).First(&user); result.Error != nil {
+		return nil, result.Error
 	}
 
-	return &user, result.Error
+	return &user, nil
+}
+
+func (ur *UserRepository) FindUserById(userId uint) (*entity.User, error) {
+	return ur.FindUserByIdTx(ur.db, userId)
+}
+
+func (ur *UserRepository) FindUserByIdTx(tx *gorm.DB, userId uint) (*entity.User, error) {
+	var user entity.User
+
+	if result := tx.Where("ID = ?", userId).First(&user); result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &user, nil
 }
 
 func (ur *UserRepository) CreateUser(user *entity.User) (result *gorm.DB) {
@@ -62,11 +83,13 @@ func (ur *UserRepository) CreateUser(user *entity.User) (result *gorm.DB) {
 func (ur *UserRepository) FindAndPreloadUserById(userId uint) (*entity.User, error) {
 	var user entity.User
 
-	result := ur.db.
+	if result := ur.db.
 		Preload("Product").
 		Preload("Product.Product").
 		Where("ID = ?", userId).
-		First(&user)
+		First(&user); result.Error != nil {
+		return nil, result.Error
+	}
 
-	return &user, result.Error
+	return &user, nil
 }
